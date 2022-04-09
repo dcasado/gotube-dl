@@ -20,8 +20,11 @@ FROM python:3.10-alpine3.15
 
 ENV LISTEN_ADDRESS="0.0.0.0"
 
+ENV UID=934
+ENV GID=934
+
 # Add group and user
-RUN addgroup -S gotube-dl && adduser -S gotube-dl -G gotube-dl
+RUN addgroup -S --gid ${GID} gotube-dl && adduser -S --uid ${UID} gotube-dl -G gotube-dl
 
 RUN apk add --no-cache ffmpeg
 
