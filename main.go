@@ -39,18 +39,23 @@ func main() {
 		err := d.Decode(&b)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if b.URL == "" {
+			http.Error(w, "URL field cannot be empty", http.StatusBadRequest)
+			return
 		}
 
 		cmd := exec.Command("yt-dlp", b.URL)
-
-		var out bytes.Buffer
-		cmd.Stdout = &out
+		var errb bytes.Buffer
+		cmd.Stderr = &errb
 		go func() {
-			log.Printf("Start download of %s", b.URL)
+			log.Printf("Starting download of %s", b.URL)
 			err = cmd.Run()
 
 			if err != nil {
-				log.Fatalf("Error downloading %s. %f", b.URL, err)
+				log.Printf("Error downloading %s. %s", b.URL, errb.String())
+				return
 			}
 
 			log.Printf("Download of %s is complete", b.URL)
