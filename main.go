@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -47,7 +48,8 @@ func main() {
 		}
 
 		cmd := exec.Command("yt-dlp", b.URL)
-		var errb bytes.Buffer
+		var outb, errb bytes.Buffer
+		cmd.Stdout = &outb
 		cmd.Stderr = &errb
 		go func() {
 			log.Printf("Starting download of %s", b.URL)
@@ -58,6 +60,10 @@ func main() {
 				return
 			}
 
+			lines := strings.Split(outb.String(), "\n")
+			for _, line := range lines {
+				fmt.Println(line)
+			}
 			log.Printf("Download of %s is complete", b.URL)
 		}()
 		w.WriteHeader(http.StatusAccepted)
