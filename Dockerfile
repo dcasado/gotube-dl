@@ -5,7 +5,7 @@ RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o 
 RUN chmod a+rx yt-dlp
 
 
-FROM golang:1.18.0-alpine3.15 AS builder
+FROM golang:1.20.1-alpine3.16 AS builder
 
 WORKDIR /app
 
