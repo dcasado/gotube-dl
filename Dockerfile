@@ -16,7 +16,7 @@ COPY main.go ./
 RUN CGO_ENABLED=0 go build -o gotube-dl
 
 
-FROM python:3.10-alpine3.15
+FROM python:3.11-alpine3.15
 
 ENV LISTEN_ADDRESS="0.0.0.0"
 
