@@ -51,22 +51,24 @@ func main() {
 		var outb, errb bytes.Buffer
 		cmd.Stdout = &outb
 		cmd.Stderr = &errb
-		go func() {
-			log.Printf("Starting download of %s", b.URL)
-			err = cmd.Run()
 
-			if err != nil {
-				log.Printf("Error downloading %s. %s", b.URL, errb.String())
-				return
-			}
+		log.Printf("Starting download of %s", b.URL)
+		err = cmd.Run()
 
-			lines := strings.Split(outb.String(), "\n")
-			for _, line := range lines {
-				fmt.Println(line)
-			}
-			log.Printf("Download of %s is complete", b.URL)
-		}()
-		w.WriteHeader(http.StatusAccepted)
+		if err != nil {
+			log.Printf("Error downloading %s. %s", b.URL, errb.String())
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/text")
+			w.Write([]byte("failed to download video"))
+			return
+		}
+
+		lines := strings.Split(outb.String(), "\n")
+		for _, line := range lines {
+			fmt.Println(line)
+		}
+		log.Printf("Download of %s is complete", b.URL)
+		w.WriteHeader(http.StatusOK)
 	})
 
 	serveMux.HandleFunc(healthEndpoint, func(w http.ResponseWriter, r *http.Request) {
