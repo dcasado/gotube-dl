@@ -56,10 +56,9 @@ func main() {
 		err = cmd.Run()
 
 		if err != nil {
-			log.Printf("Error downloading %s. %s", b.URL, errb.String())
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/text")
-			w.Write([]byte("failed to download video"))
+			w.Write([]byte(fmt.Sprintf("Failed to download video: %s", errb.String())))
 			return
 		}
 
