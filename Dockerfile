@@ -1,4 +1,4 @@
-FROM alpine:3.19 as downloader
+FROM alpine:3.20 as downloader
 
 RUN apk --no-cache add curl
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
