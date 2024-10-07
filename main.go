@@ -39,7 +39,7 @@ func main() {
 		d := json.NewDecoder(r.Body)
 		err := d.Decode(&b)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Failed to parse JSON body", http.StatusBadRequest)
 			return
 		}
 		if b.URL == "" {
