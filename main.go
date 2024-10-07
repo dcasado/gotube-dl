@@ -16,9 +16,6 @@ import (
 )
 
 const (
-	downloadEndpoint = "/download"
-	healthEndpoint   = "/health"
-
 	listenAddressEnvVariable = "LISTEN_ADDRESS"
 	listenPortEnvVariable    = "LISTEN_PORT"
 )
@@ -29,12 +26,7 @@ type downloadBody struct {
 
 func main() {
 	serveMux := http.NewServeMux()
-	serveMux.HandleFunc(downloadEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			log.Printf("Method %s not allowed on %s endpoint", r.Method, r.URL)
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-		}
+	serveMux.HandleFunc("POST /download", func(w http.ResponseWriter, r *http.Request) {
 		var b downloadBody
 		d := json.NewDecoder(r.Body)
 		err := d.Decode(&b)
@@ -54,7 +46,6 @@ func main() {
 
 		log.Printf("Starting download of %s", b.URL)
 		err = cmd.Run()
-
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/text")
@@ -70,13 +61,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	serveMux.HandleFunc(healthEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			log.Printf("Method %s not allowed on %s endpoint", r.Method, r.URL)
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
-		}
-
+	serveMux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/text")
 		w.Write([]byte("Ok"))
