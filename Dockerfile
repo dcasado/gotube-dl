@@ -11,6 +11,7 @@ WORKDIR /app
 
 COPY go.mod ./
 COPY main.go ./
+COPY index.html ./
 
 # Build binary
 RUN CGO_ENABLED=0 go build -o gotube-dl

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -24,32 +25,55 @@ type downloadBody struct {
 	URL string `json:"url"`
 }
 
+//go:embed index.html
+var htmlFiles embed.FS
+
 func main() {
 	serveMux := http.NewServeMux()
-	serveMux.HandleFunc("POST /download", func(w http.ResponseWriter, r *http.Request) {
-		var b downloadBody
-		d := json.NewDecoder(r.Body)
-		err := d.Decode(&b)
+	serveMux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		index, err := htmlFiles.ReadFile("index.html")
 		if err != nil {
-			http.Error(w, "Failed to parse JSON body", http.StatusBadRequest)
+			http.Error(w, "Failed to read index.html", http.StatusInternalServerError)
 			return
 		}
-		if b.URL == "" {
-			http.Error(w, "URL field cannot be empty", http.StatusBadRequest)
-			return
+		_, _ = w.Write(index)
+	})
+	serveMux.HandleFunc("POST /download", func(w http.ResponseWriter, r *http.Request) {
+		var url string
+		if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+			err := r.ParseForm()
+			if err != nil {
+				http.Error(w, "Failed to parse form body", http.StatusBadRequest)
+				return
+			}
+			url = r.PostForm.Get("url")
+		} else {
+			var b downloadBody
+			d := json.NewDecoder(r.Body)
+			err := d.Decode(&b)
+			if err != nil {
+				http.Error(w, "Failed to parse JSON body", http.StatusBadRequest)
+				return
+			}
+			if b.URL == "" {
+				http.Error(w, "URL field cannot be empty", http.StatusBadRequest)
+				return
+			}
+			url = b.URL
 		}
 
-		cmd := exec.Command("yt-dlp", b.URL)
+		cmd := exec.Command("yt-dlp", url)
 		var outb, errb bytes.Buffer
 		cmd.Stdout = &outb
 		cmd.Stderr = &errb
 
-		log.Printf("Starting download of %s", b.URL)
-		err = cmd.Run()
+		log.Printf("Starting download of %s", url)
+		err := cmd.Run()
 		if err != nil {
+			fmt.Printf("Failed to run command: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/text")
-			w.Write([]byte(fmt.Sprintf("Failed to download video: %s", errb.String())))
+			_, _ = w.Write(fmt.Appendf(nil, "Failed to download video: %s", errb.String()))
 			return
 		}
 
@@ -57,14 +81,14 @@ func main() {
 		for _, line := range lines {
 			fmt.Println(line)
 		}
-		log.Printf("Download of %s is complete", b.URL)
+		log.Printf("Download of %s is complete", url)
 		w.WriteHeader(http.StatusOK)
 	})
 
 	serveMux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/text")
-		w.Write([]byte("Ok"))
+		_, _ = w.Write([]byte("Ok"))
 	})
 
 	server := &http.Server{
